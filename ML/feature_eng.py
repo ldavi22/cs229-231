@@ -129,3 +129,28 @@ def preprocess(x_train, x_test):
     x_train, x_test = x_train.align(x_test, join='left', axis=1, fill_value=0)
 
     return x_train, x_test, y_train, y_test
+
+def correlation_filter(x_train, y_train, threshold):
+        corr_matrix = np.abs(x_train.corr())
+        high_corr_pairs = []
+
+        for i in range(len(corr_matrix.columns)):
+            for j in range(i + 1, len(corr_matrix.columns)):
+                if corr_matrix.iloc[i, j] > threshold:
+                    high_corr_pairs.append((corr_matrix.columns[i], corr_matrix.columns[j], corr_matrix.iloc[i, j]))
+
+        high_corr_pairs.sort(key=lambda x: x[2], reverse=True)
+
+        features_drop = []
+
+        for feat1, feat2, val in high_corr_pairs:
+            if abs(x_train[feat1].corr(y_train)) > abs(x_train[feat2].corr(y_train)):
+                features_drop.append(feat2)
+            else:
+                features_drop.append(feat1)
+
+        features_drop = list(set(features_drop))
+
+        x_filtered = x_train.drop(columns = features_drop)
+
+        return x_filtered
