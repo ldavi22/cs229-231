@@ -116,17 +116,20 @@ def preprocess(x_train, x_test):
     x_test['CentralAir'] = x_test['CentralAir'].map({'N': 0, 'Y': 1})
 
     # --- One-hot encode nominal features ---
+    # --- One-hot encode nominal features (combined to ensure consistent encoding) ---
     nominal_cols = ['MSSubClass', 'MSZoning', 'Alley', 'LandContour', 'LotConfig',
                     'Neighborhood', 'Condition1', 'BldgType', 'HouseStyle',
                     'RoofStyle', 'RoofMatl', 'Exterior1st', 'MasVnrType',
                     'Foundation', 'Heating', 'GarageType', 'MiscFeature',
                     'SaleType', 'SaleCondition']
 
-    x_train = pd.get_dummies(x_train, columns=nominal_cols, drop_first=True, dtype=int)
-    x_test = pd.get_dummies(x_test, columns=nominal_cols, drop_first=True, dtype=int)
+    # Mark sets, combine, encode together, then split back
+    combined = pd.concat([x_train.assign(_set='train'),
+                          x_test.assign(_set='test')])
+    combined = pd.get_dummies(combined, columns=nominal_cols, drop_first=True, dtype=int)
 
-    # --- Align columns (test might have missing/extra dummy columns) ---
-    x_train, x_test = x_train.align(x_test, join='left', axis=1, fill_value=0)
+    x_train = combined[combined['_set'] == 'train'].drop('_set', axis=1)
+    x_test = combined[combined['_set'] == 'test'].drop('_set', axis=1)
 
     return x_train, x_test, y_train, y_test
 
