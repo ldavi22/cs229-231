@@ -131,6 +131,9 @@ def preprocess(x_train, x_test):
     x_train = combined[combined['_set'] == 'train'].drop('_set', axis=1)
     x_test = combined[combined['_set'] == 'test'].drop('_set', axis=1)
 
+    x_test = x_test.reindex(columns=x_train.columns, fill_value=0)
+
+
     return x_train, x_test, y_train, y_test
 
 def correlation_filter(x_train, y_train, threshold):
